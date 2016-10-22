@@ -40,6 +40,12 @@ package by.blooddy.api.desktop {
 			
 		}
 		
+		//--------------------------------------------------------------------------
+		//
+		//  Variables
+		//
+		//--------------------------------------------------------------------------
+		
 		private var _username:String;
 		private var _password:String;
 		private var _redirect_uri:String;
@@ -93,13 +99,15 @@ package by.blooddy.api.desktop {
 			
 			setKey( 'token', soundcloud._token = null );
 			
+			var data:URLVariables = new URLVariables();
+			data.client_id = this._client_id;
+			data.redirect_uri = this._redirect_uri;
+			data.display = 'popup';
+			data.response_type = 'code';
+			
 			var request:URLRequest = new URLRequest();
 			request.url = 'https://soundcloud.com/connect';
-			request.data = new URLVariables();
-			request.data.client_id = this._client_id;
-			request.data.redirect_uri = this._redirect_uri;
-			request.data.display = 'popup';
-			request.data.response_type = 'code';
+			request.data = data;
 			
 			var html:HTMLLoader = new HTMLLoader();
 			html.load( request );
@@ -120,39 +128,52 @@ package by.blooddy.api.desktop {
 					document.addEventListener( 'DOMContentLoaded', function domLoaded(event:Object):void {
 						document.removeEventListener( event.type, domLoaded );
 						
+						soundcloud.accept( html, fail );
+						
 						try {
 							
 							var form:Object = document.querySelector( 'form[action="/connect/return_to_client"]' );
-							
 							if ( form ) {
 								
-								html.addEventListener( LocationChangeEvent.LOCATION_CHANGING, function locationChanging(event:LocationChangeEvent):void {
-									if ( ( new RegExp( '^' + request.data.redirect_uri.replace( /([\/\.])/g, '\\$1' ) ) ).test( event.location ) ) {
-										
-										html.removeEventListener( LocationChangeEvent.LOCATION_CHANGING, locationChanging );
-										
-										var data:URLVariables = new URLVariables( event.location.replace( /^[^\?]*\?/, '' ) );
-										
-										soundcloud.query(
-											'post.oauth2.token',
-											{
-												client_secret: soundcloud._secret,
-												redirect_uri: request.data.redirect_uri,
-												grant_type: 'authorization_code',
-												code: data.code
-											},
-											function(result:Object):void {
-												
-												setKey( 'token', soundcloud._token = result.access_token );
-												
-												if ( success ) success();
-												
-											},
-											fail
-										);
-										
-									}
-								} );
+								if ( form.querySelector( 'a[href$="/' + soundcloud._username + '"]' ) ) {
+									
+									document.createElement( 'form' ).submit.call( form );
+									
+									html.addEventListener( LocationChangeEvent.LOCATION_CHANGING, function locationChanging(event:LocationChangeEvent):void {
+										if ( ( new RegExp( '^' + request.data.redirect_uri.replace( /([\/\.])/g, '\\$1' ) ) ).test( event.location ) ) {
+											
+											html.removeEventListener( LocationChangeEvent.LOCATION_CHANGING, locationChanging );
+											
+											cancel();
+											
+											var data:URLVariables = new URLVariables( event.location.replace( /^[^\?]*\?/, '' ) );
+											
+											soundcloud.query(
+												'post.oauth2.token',
+												{
+													client_secret: soundcloud._secret,
+													redirect_uri: request.data.redirect_uri,
+													grant_type: 'authorization_code',
+													code: data.code
+												},
+												function(result:Object):void {
+													
+													setKey( 'token', soundcloud._token = result.access_token );
+													
+													if ( success ) success();
+													
+												},
+												fail
+											);
+											
+										}
+									} );
+									
+								} else {
+									
+									html.window.location.replace( document.querySelector( 'a[href^="/connect/logout"]' ).href );
+									
+								}
 								
 							} else {
 								
@@ -160,9 +181,22 @@ package by.blooddy.api.desktop {
 								form.username.value = soundcloud._username;
 								form.password.value = soundcloud._password;
 								
+								if ( form.querySelector( '#recaptcha_widget_div' ) ) {
+									
+									soundcloud.accept( html, function(e:Error):void {
+										
+										if ( fail ) fail( e );
+										cancel();
+										
+									} );
+									
+								} else {
+									
+									document.createElement( 'form' ).submit.call( form );
+									
+								}
+								
 							}
-							
-							document.createElement( 'form' ).submit.call( form );
 							
 						} catch ( e:Error ) {
 							
