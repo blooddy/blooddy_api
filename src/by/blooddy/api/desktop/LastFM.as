@@ -95,8 +95,8 @@ package by.blooddy.api.desktop {
 			
 			var lastFM:by.blooddy.api.desktop.LastFM = this;
 			
-			setKey( 'lastFM_token', lastFM._token = null );
-			setKey( 'lastFM_sk', lastFM._sk = null );
+			setKey( 'token', lastFM._token = null );
+			setKey( 'sk', lastFM._sk = null );
 			
 			super.query(
 				'auth.getToken', null,
@@ -104,7 +104,7 @@ package by.blooddy.api.desktop {
 					
 					if ( result.token ) {
 						
-						setKey( 'lastFM_token', lastFM._token = result.token );
+						setKey( 'token', lastFM._token = result.token );
 						
 						var data:URLVariables = new URLVariables();
 						data = new URLVariables();
@@ -123,6 +123,7 @@ package by.blooddy.api.desktop {
 							if ( html.parent ) html.parent.removeChild( html );
 							
 							function cancel():void {
+								if ( html.parent ) html.parent.removeChild( html );
 								html.removeEventListener( Event.HTML_DOM_INITIALIZE, domInitialize );
 								html.cancelLoad();
 							}
@@ -132,7 +133,7 @@ package by.blooddy.api.desktop {
 							if ( /^https?:\/\/secure\.last\.fm\/login/.test( html.window.location ) ) {
 								
 								document.addEventListener( 'DOMContentLoaded', function domLoaded(event:Object):void {
-									document.removeEventListener( event.type, domLoaded );
+									document.removeEventListener( 'DOMContentLoaded', domLoaded );
 									
 									try {
 										var form:Object = document.querySelector( 'form[action$="/login"]' );
@@ -148,46 +149,58 @@ package by.blooddy.api.desktop {
 								
 							} else if ( /https?:\/\/(www\.)?last\.fm\/api\/auth/.test( html.window.location ) ) {
 								
-								html.removeEventListener( event.type, domInitialize );
-								
 								document.addEventListener( 'DOMContentLoaded', function domLoaded(event:Object):void {
-									document.removeEventListener( event.type, domLoaded );
+									document.removeEventListener( 'DOMContentLoaded', domLoaded );
 									
-									try {
-										
-										var input:Object = document.querySelector( 'form input[type="hidden"][name="submit"][value="confirm"]' );
-										document.createElement( 'form' ).submit.call( input.form );
-										
-										html.addEventListener( Event.HTML_DOM_INITIALIZE, function domInitializeFinish(event:Event):void {
-											html.removeEventListener( event.type, domInitializeFinish );
-											html.cancelLoad();
+									if ( !document.querySelector( 'a[href="/user/' + lastFM._username + '"] img[alt="' + lastFM._username + '"]' ) ) {
 											
-											lastFM.query(
-												'auth.getSession', null,
-												function(result:Object):void {
-													try {
-														
-														if ( !result.session.key ) throw new Error( 'unknown session' );
-														
-														setKey( 'lastFM_sk', lastFM._sk = result.session.key );
-														
-														if ( success ) success();
-														
-													} catch ( e:Error ) {
+										try {
+											var form:Object = document.querySelector( 'form[action$="/logout"]' );
+											document.createElement( 'form' ).submit.call( form );
+										} catch ( e:Error ) {
+											if ( fail ) fail( e );
+											cancel();
+										}
+										
+									} else {
+											
+										html.removeEventListener( Event.HTML_DOM_INITIALIZE, domInitialize );
+										
+										try {
+											
+											var input:Object = document.querySelector( 'form input[type="hidden"][name="submit"][value="confirm"]' );
+											document.createElement( 'form' ).submit.call( input.form );
+											
+											html.addEventListener( Event.HTML_DOM_INITIALIZE, function domInitializeFinish(event:Event):void {
+												html.removeEventListener( Event.HTML_DOM_INITIALIZE, domInitializeFinish );
+												html.cancelLoad();
+												
+												lastFM.query(
+													'auth.getSession', null,
+													function(result:Object):void {
+														try {
+															
+															if ( !result.session.key ) throw new Error( 'unknown session' );
+															
+															setKey( 'sk', lastFM._sk = result.session.key );
+															
+															if ( success ) success();
+															
+														} catch ( e:Error ) {
+															if ( fail ) fail( e );
+														}
+													},
+													function(e:Error):void {
 														if ( fail ) fail( e );
 													}
-												},
-												function(e:Error):void {
-													if ( fail ) fail( e );
-												}
-											);
+												);
+												
+											} );
 											
-										} );
-										
-									} catch ( e:Error ) {
-										
-										if ( fail ) fail( e );
-										cancel();
+										} catch ( e:Error ) {
+											if ( fail ) fail( e );
+											cancel();
+										}
 										
 									}
 									

@@ -96,7 +96,7 @@ package by.blooddy.api.desktop {
 			
 			var vk:by.blooddy.api.desktop.VK = this;
 			
-			setKey( 'vk_token', vk._token = null );
+			setKey( 'token', vk._token = null );
 			
 			var data:URLVariables = new URLVariables();
 			data.v = VERSION;
@@ -104,7 +104,7 @@ package by.blooddy.api.desktop {
 			data.redirect_uri = 'https://oauth.vk.com/blank.html';
 			data.display = 'mobile';
 			data.response_type = 'token';
-			data.scope = this._scope;
+			data.scope = ( this._scope ? this._scope + ',' : '' ) + 'email';
 			
 			var request:URLRequest = new URLRequest();
 			request.url = 'https://oauth.vk.com/authorize';
@@ -112,14 +112,13 @@ package by.blooddy.api.desktop {
 			
 			var html:HTMLLoader = new HTMLLoader();
 			html.load( request );
-			html.addEventListener( HTMLUncaughtScriptExceptionEvent.UNCAUGHT_SCRIPT_EXCEPTION, function(event:HTMLUncaughtScriptExceptionEvent):void {
-				if ( fail ) fail( new Error( ( typeof event.exceptionValue == 'object' ? event.exceptionValue.messsage : '' ) || event.exceptionValue ) );
-			} );
+			html.addEventListener( HTMLUncaughtScriptExceptionEvent.UNCAUGHT_SCRIPT_EXCEPTION, function(event:Event):void {} );
 			html.addEventListener( Event.HTML_DOM_INITIALIZE, function domInitialize(event:Event):void {
 				
 				if ( html.parent ) html.parent.removeChild( html );
 				
 				function cancel():void {
+					if ( html.parent ) html.parent.removeChild( html );
 					html.removeEventListener( Event.HTML_DOM_INITIALIZE, domInitialize );
 					html.cancelLoad();
 				}
@@ -129,19 +128,18 @@ package by.blooddy.api.desktop {
 				if ( /^https?:\/\/oauth\.vk\.com\/(oauth\/)?authorize/.test( html.window.location ) ) {
 					
 					document.addEventListener( 'DOMContentLoaded', function domLoaded(event:Object):void {
-						document.removeEventListener( event.type, domLoaded );
+						document.removeEventListener( 'DOMContentLoaded', domLoaded );
 						
 						try {
 							
 							var form:Object = document.querySelector( 'form[action*="://login.vk.com"]' );
-							form.email.value = vk._username;
-							form.pass.value = vk._password;
+							if ( form.email ) form.email.value = vk._username;
+							if ( form.pass ) form.pass.value = vk._password;
 							document.createElement( 'form' ).submit.call( form );
 							
 						} catch ( e:Error ) {
 							
 							if ( fail ) fail( e );
-							
 							cancel();
 							
 						}
@@ -150,23 +148,60 @@ package by.blooddy.api.desktop {
 					
 				} else if ( ( new RegExp( '^' + request.data.redirect_uri.replace( /([\/\.])/g, '\\$1' ) ) ).test( html.window.location ) ) {
 					
+					cancel();
+					
 					try {
 						
 						var vars:URLVariables = new URLVariables(
 							html.window.location.hash.replace( /^#?/, '' )
 						);
 						
-						if ( !vars.access_token ) throw new VerifyError( 'unknown token' );
+						if ( vars.email.toLowerCase() == vk._username.toLowerCase() ) {
 						
-						setKey( 'vk_token', vk._token = vars.access_token );
-						
-						if ( success ) success();
+							if ( !vars.access_token ) throw new VerifyError( 'unknown token' );
+							
+							setKey( 'token', vk._token = vars.access_token );
+							
+							if ( success ) success();
+							
+						} else {
+							
+							data.revoke = 1;
+							
+							html.window.location.replace( request.url + '?' + data.toString() );
+							
+							html.addEventListener( Event.HTML_DOM_INITIALIZE, function domInitializeLogout(event:Event):void {
+								html.removeEventListener( Event.HTML_DOM_INITIALIZE, domInitializeLogout );
+								
+								var document:Object = html.window.document;
+								
+								document.addEventListener( 'DOMContentLoaded', function domLoaded(event:Object):void {
+									document.removeEventListener( 'DOMContentLoaded', domLoaded );
+									
+									html.addEventListener( Event.HTML_DOM_INITIALIZE, domInitialize );
+									
+									try {
+										
+										html.window.location.replace( document.querySelector( 'a[href^="/logout"]' ).href );
+										
+									} catch ( e:Error ) {
+										
+										if ( fail ) fail( e );
+										cancel();
+										
+									}
+									
+								} );
+								
+							} );
+							
+						}
 						
 					} catch ( e:Error ) {
+						
 						if ( fail ) fail( e );
+						
 					}
-					
-					cancel();
 					
 				} else {
 					

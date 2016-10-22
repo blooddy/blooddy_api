@@ -43,7 +43,7 @@ package by.blooddy.api {
 			this._secret =		parameters[ 'secret' ];
 			this._sid =			parameters[ 'sid' ];
 			
-			this._token =		parameters[ 'token' ] || getKey( 'vk_token' );
+			this._token =		parameters[ 'token' ] || getKey( 'token' );
 			
 			this._viewer_id =	parameters[ 'viewer_id' ];
 			

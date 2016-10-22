@@ -38,8 +38,8 @@ package by.blooddy.api {
 			this._api_key =	parameters[ 'api_key' ];
 			this._secret =	parameters[ 'secret' ];
 			
-			this._token =	parameters[ 'token' ] || getKey( 'lastFM_token' );
-			this._sk =		parameters[ 'sk' ] || getKey( 'lastFM_sk' );
+			this._token =	parameters[ 'token' ] ||	getKey( 'token' );
+			this._sk =		parameters[ 'sk' ] ||		getKey( 'sk' );
 			
 		}
 		
