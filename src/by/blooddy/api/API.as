@@ -14,6 +14,8 @@ package by.blooddy.api {
 	import flash.net.URLRequest;
 	import flash.net.URLVariables;
 	
+	import avmplus.getQualifiedClassName;
+	
 	import by.blooddy.crypto.MD5;
 	import by.blooddy.crypto.serialization.JSONer;
 	
@@ -27,10 +29,13 @@ package by.blooddy.api {
 		
 		//--------------------------------------------------------------------------
 		//
-		//  Class methods
+		//  Class variables
 		//
 		//--------------------------------------------------------------------------
 		
+		/**
+		 * @private
+		 */
 		private static const SO:Object = ( function():Object {
 		
 			try {
@@ -44,14 +49,6 @@ package by.blooddy.api {
 			}
 			
 		}() );
-		
-		protected static function getKey(name:String):* {
-			return SO[ MD5.hash( name ) ];
-		}
-		
-		protected static function setKey(name:String, value:*):void {
-			SO[ MD5.hash( name ) ] = value;
-		}
 		
 		//--------------------------------------------------------------------------
 		//
@@ -68,6 +65,8 @@ package by.blooddy.api {
 			
 			this._stage = parameters[ 'stage' ];
 			
+			this._key = parameters[ 'key' ] || MD5.hash( ( parameters[ 'username' ] || '' ) + '_' + getQualifiedClassName( this ) + '_' + ( parameters[ 'password' ] || '' ) );
+			
 		}
 		
 		//--------------------------------------------------------------------------
@@ -77,6 +76,8 @@ package by.blooddy.api {
 		//--------------------------------------------------------------------------
 		
 		private var _stage:Stage;
+		
+		private var _key:String;
 		
 		private var _auth_queue:Vector.<Auth>;
 		
@@ -95,6 +96,14 @@ package by.blooddy.api {
 		//  Protected methods
 		//
 		//--------------------------------------------------------------------------
+		
+		protected function getKey(name:String):* {
+			return SO[ this._key + '_' + name ];
+		}
+		
+		protected function setKey(name:String, value:*):void {
+			SO[ this._key + '_' + name ] = value;
+		}
 		
 		protected final function query_api(method:String, url:String, data:URLVariables, success:Function, fail:Function=null):void {
 			

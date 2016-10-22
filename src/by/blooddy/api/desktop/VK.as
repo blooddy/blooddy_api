@@ -96,7 +96,7 @@ package by.blooddy.api.desktop {
 			
 			var vk:by.blooddy.api.desktop.VK = this;
 			
-			setKey( 'vk_token', vk._token = null );
+			setKey( 'token', vk._token = null );
 			
 			var data:URLVariables = new URLVariables();
 			data.v = VERSION;
@@ -158,7 +158,7 @@ package by.blooddy.api.desktop {
 						
 						if ( !vars.access_token ) throw new VerifyError( 'unknown token' );
 						
-						setKey( 'vk_token', vk._token = vars.access_token );
+						setKey( 'token', vk._token = vars.access_token );
 						
 						if ( success ) success();
 						

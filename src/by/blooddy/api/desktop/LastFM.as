@@ -95,8 +95,8 @@ package by.blooddy.api.desktop {
 			
 			var lastFM:by.blooddy.api.desktop.LastFM = this;
 			
-			setKey( 'lastFM_token', lastFM._token = null );
-			setKey( 'lastFM_sk', lastFM._sk = null );
+			setKey( 'token', lastFM._token = null );
+			setKey( 'sk', lastFM._sk = null );
 			
 			super.query(
 				'auth.getToken', null,
@@ -104,7 +104,7 @@ package by.blooddy.api.desktop {
 					
 					if ( result.token ) {
 						
-						setKey( 'lastFM_token', lastFM._token = result.token );
+						setKey( 'token', lastFM._token = result.token );
 						
 						var data:URLVariables = new URLVariables();
 						data = new URLVariables();
@@ -169,7 +169,7 @@ package by.blooddy.api.desktop {
 														
 														if ( !result.session.key ) throw new Error( 'unknown session' );
 														
-														setKey( 'lastFM_sk', lastFM._sk = result.session.key );
+														setKey( 'sk', lastFM._sk = result.session.key );
 														
 														if ( success ) success();
 														

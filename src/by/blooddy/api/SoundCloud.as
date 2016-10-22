@@ -36,7 +36,7 @@ package by.blooddy.api {
 			this._client_id =	parameters[ 'client_id' ];
 			this._secret =		parameters[ 'secret' ];
 			
-			this._token =		parameters[ 'token' ] || getKey( 'soundcloud_token' );
+			this._token =		parameters[ 'token' ] || getKey( 'token' );
 			
 		}
 		

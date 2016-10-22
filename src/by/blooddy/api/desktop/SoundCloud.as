@@ -91,7 +91,7 @@ package by.blooddy.api.desktop {
 			
 			var soundcloud:by.blooddy.api.desktop.SoundCloud = this;
 			
-			setKey( 'soundcloud_token', soundcloud._token = null );
+			setKey( 'token', soundcloud._token = null );
 			
 			var request:URLRequest = new URLRequest();
 			request.url = 'https://soundcloud.com/connect';
@@ -143,7 +143,7 @@ package by.blooddy.api.desktop {
 											},
 											function(result:Object):void {
 												
-												setKey( 'soundcloud_token', soundcloud._token = result.access_token );
+												setKey( 'token', soundcloud._token = result.access_token );
 												
 												if ( success ) success();
 												
