@@ -36,15 +36,15 @@ package by.blooddy.api {
 		/**
 		 * @private
 		 */
-		private static const SO:Object = ( function():Object {
+		private static const SO:SharedObject = ( function():SharedObject {
 		
 			try {
-				return SharedObject.getLocal( 'blooddy_api', null, true ).data;
+				return SharedObject.getLocal( 'blooddy_api', null, true );
 			} catch ( e:Error ) {
 				try {
-					return SharedObject.getLocal( 'blooddy_api' ).data;
+					return SharedObject.getLocal( 'blooddy_api' );
 				} catch ( e:Error ) {
-					return {};
+					return null;
 				}
 			}
 			
@@ -98,11 +98,18 @@ package by.blooddy.api {
 		//--------------------------------------------------------------------------
 		
 		protected function getKey(name:String):* {
-			return SO[ this._key + '_' + name ];
+			if ( SO ) {
+				return SO.data[ this._key + '_' + name ];
+			} else {
+				return null;
+			}
 		}
 		
 		protected function setKey(name:String, value:*):void {
-			SO[ this._key + '_' + name ] = value;
+			if ( SO ) {
+				SO.data[ this._key + '_' + name ] = value;
+				SO.flush();
+			}
 		}
 		
 		protected final function query_api(method:String, url:String, data:URLVariables, success:Function, fail:Function=null):void {
