@@ -117,6 +117,7 @@ package by.blooddy.api.desktop {
 				if ( html.parent ) html.parent.removeChild( html );
 				
 				function cancel():void {
+					if ( html.parent ) html.parent.removeChild( html );
 					html.removeEventListener( Event.HTML_DOM_INITIALIZE, domInitialize );
 					html.cancelLoad();
 				}
