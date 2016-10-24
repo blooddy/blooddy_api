@@ -93,7 +93,7 @@ package by.blooddy.api.desktop {
 		/**
 		 * @private
 		 */
-		protected override function query_auth(success:Function, fail:Function):void {
+		protected override function auth_api(success:Function, fail:Function):void {
 			
 			var soundcloud:by.blooddy.api.desktop.SoundCloud = this;
 			
@@ -128,8 +128,6 @@ package by.blooddy.api.desktop {
 					
 					document.addEventListener( 'DOMContentLoaded', function domLoaded(event:Object):void {
 						document.removeEventListener( event.type, domLoaded );
-						
-						soundcloud.accept( html, fail );
 						
 						try {
 							

@@ -5,6 +5,7 @@ package by.blooddy.api {
 	import flash.errors.IllegalOperationError;
 	import flash.events.ErrorEvent;
 	import flash.events.Event;
+	import flash.events.HTTPStatusEvent;
 	import flash.events.IOErrorEvent;
 	import flash.events.SecurityErrorEvent;
 	import flash.html.HTMLLoader;
@@ -79,7 +80,7 @@ package by.blooddy.api {
 		
 		private var _key:String;
 		
-		private var _auth_queue:Vector.<Auth>;
+		private var _queue:Vector.<Queue>;
 		
 		//--------------------------------------------------------------------------
 		//
@@ -122,15 +123,23 @@ package by.blooddy.api {
 			var loader:URLLoader = new URLLoader( request );
 			loader.dataFormat = URLLoaderDataFormat.TEXT;
 			
-			loader.addEventListener( Event.COMPLETE, handler );
-			loader.addEventListener( IOErrorEvent.IO_ERROR, handler );
-			loader.addEventListener( SecurityErrorEvent.SECURITY_ERROR, handler );
+			loader.addEventListener( Event.COMPLETE, stateHandle );
+			loader.addEventListener( IOErrorEvent.IO_ERROR, stateHandle );
+			loader.addEventListener( SecurityErrorEvent.SECURITY_ERROR, stateHandle );
+			loader.addEventListener( HTTPStatusEvent.HTTP_STATUS, statusHandle );
 			
-			function handler(event:Event):void {
+			var status:int;
+			
+			function statusHandle(event:HTTPStatusEvent):void {
+				status = event.status;
+			}
+			
+			function stateHandle(event:Event):void {
 				
-				loader.removeEventListener( Event.COMPLETE, handler );
-				loader.removeEventListener( IOErrorEvent.IO_ERROR, handler );
-				loader.removeEventListener( SecurityErrorEvent.SECURITY_ERROR, handler );
+				loader.removeEventListener( Event.COMPLETE, stateHandle );
+				loader.removeEventListener( IOErrorEvent.IO_ERROR, stateHandle );
+				loader.removeEventListener( SecurityErrorEvent.SECURITY_ERROR, stateHandle );
+				loader.removeEventListener( HTTPStatusEvent.HTTP_STATUS, statusHandle );
 				
 				var result:Object;
 				var error:Error;
@@ -150,7 +159,7 @@ package by.blooddy.api {
 							default:							ErrorClass = Error;			break;
 						}
 						
-						e = new ErrorClass( ( event as ErrorEvent ).text, ( event as ErrorEvent ).errorID );
+						e = new ErrorClass( ( event as ErrorEvent ).text, status );
 						
 					}
 					
@@ -170,34 +179,34 @@ package by.blooddy.api {
 		
 		protected final function auth(success:Function=null, fail:Function=null):void {
 			
-			if ( !this._auth_queue ) {
+			if ( !this._queue ) {
 				
 				var api:API = this;
-				api._auth_queue = new Vector.<Auth>();
-				api.query_auth(
+				api._queue = new Vector.<Queue>();
+				api.auth_api(
 					function():void {
-						while ( api._auth_queue.length ) {
-							var auth:Auth = api._auth_queue.shift(); 
+						while ( api._queue.length ) {
+							var auth:Queue = api._queue.shift(); 
 							if ( auth.success ) auth.success();
 						}
-						api._auth_queue = null;
+						api._queue = null;
 					},
 					function(e:Error):void {
-						while ( api._auth_queue.length ) {
-							var auth:Auth = api._auth_queue.shift();
+						while ( api._queue.length ) {
+							var auth:Queue = api._queue.shift();
 							if ( auth.fail ) auth.fail( e );
 						}
-						api._auth_queue = null;
+						api._queue = null;
 					}
 				);
 				
 			}
 			
-			this._auth_queue.push( new Auth( success, fail ) );
+			this._queue.push( new Queue( success, fail ) );
 			
 		}
 		
-		protected virtual function query_auth(success:Function, fail:Function):void {
+		protected virtual function auth_api(success:Function, fail:Function):void {
 			throw new IllegalOperationError();
 		}
 		
@@ -224,9 +233,9 @@ package by.blooddy.api {
 /**
  * @private
  */
-internal final class Auth {
+internal final class Queue {
 	
-	public function Auth(success:Function, fail:Function) {
+	public function Queue(success:Function, fail:Function) {
 		this.success = success;
 		this.fail = fail;
 	}

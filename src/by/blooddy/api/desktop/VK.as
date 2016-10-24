@@ -92,7 +92,7 @@ package by.blooddy.api.desktop {
 		/**
 		 * @private
 		 */
-		protected override function query_auth(success:Function, fail:Function):void {
+		protected override function auth_api(success:Function, fail:Function):void {
 			
 			var vk:by.blooddy.api.desktop.VK = this;
 			
